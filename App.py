@@ -87,7 +87,9 @@ class FinancasApp(ft.Column):
                         ],
                     ),
                     ft.Column(
+                        alignment=ft.MainAxisAlignment.START,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        height=600,
                         controls=[
                             self.filtro,
                             self.despezas,
