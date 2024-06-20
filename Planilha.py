@@ -15,10 +15,6 @@ class Planilha:
         # Salva mudanças do arquivo.
         self.book.save('PlanilhaDespezas.xlsx')
 
-    # for linha in self.planilha.pagina_despezas.iter_rows(min_row=2):
-    #     if any(celulas.value is None for celulas in linha[:3]):
-    #         break
-
     def remove(self, despeza):
         contador = 1
         for linha in self.pagina_despezas.iter_rows(min_row=2):
