@@ -3,18 +3,91 @@ import flet as ft
 
 
 class Despeza(ft.Column):
-    def __init__(self, titulo, valor, tipo):
+    def __init__(self, titulo, valor, tipo, edita_saldo, remove_despeza, edita_planilha):
         super().__init__()
         self.titulo = titulo
         self.valor = float(valor)
         self.tipo = tipo
+        self.edita_saldo = edita_saldo
+        self.remove_despeza = remove_despeza
+        self.edita_planilha = edita_planilha
 
-        self.dados = ft.Row(
-            [ft.Text(value=f"{self.titulo}  |  {self.valor}".upper(), color="white", size=20)],
-            alignment=ft.MainAxisAlignment.CENTER
+        # Elementos expostos para permitir a edição das despezas.
+        self.edicao_titulo = ft.TextField(value=self.titulo)
+        self.edicao_valor = ft.TextField(value=self.valor)
+        self.edicao_tipo = ft.Dropdown(
+            value=self.tipo,
+            options=[
+                ft.dropdown.Option("Ganho"),
+                ft.dropdown.Option("Gasto"),
+            ],
+        )
+        # Combina os elementos de edição em um bloco.
+        self.edicao = ft.Column(
+            visible=False,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            controls=[
+                self.edicao_titulo,
+                self.edicao_valor,
+                self.edicao_tipo,
+                ft.TextButton(text="Confirmar", on_click=self.confirma_mudanca),
+            ],
         )
 
-        self.controls = [self.dados]
+        # Bloco onde é exposto os dados inseridos.
+        self.dados_display = ft.Text(value=f"{self.titulo} -> {self.tipo} R$ {self.valor:.2f}", color="white", size=15, width=250)
+        self.dados = ft.Row(
+            visible=True,
+            alignment=ft.MainAxisAlignment.CENTER,
+            controls=[
+                self.dados_display,
+                ft.TextButton(text="Editar", on_click=self.editar_despeza),
+                ft.TextButton(text="Excluir", on_click=self.remove),
+            ],
+        )
+
+        # Exibe na página do app.
+        self.controls = [self.dados, self.edicao]
+
+    # Permite editar os dados de uma movimentação.
+    def editar_despeza(self, e):
+        self.edita_saldo(self, True)
+        self.inverte_visibilidade()
+
+        self.update()
+
+    # Confirma a edição da movimentação.
+    def confirma_mudanca(self, e):
+        valores_antigos = [self.valor, self.titulo, self.tipo]
+        self.atualiza_valores_despeza()
+        self.edita_planilha(self, valores_antigos)
+        self.edita_saldo(self, False)
+        self.atualiza_dados_display()
+        self.inverte_visibilidade()
+        self.update()
+
+    def remove(self, e):
+        self.edita_saldo(self, True)
+        self.remove_despeza(self)
+
+    def inverte_visibilidade(self):
+        if self.edicao.visible:
+            self.edicao.visible = False
+        else:
+            self.edicao.visible = True
+
+        if self.dados.visible:
+            self.dados.visible = False
+        else:
+            self.dados.visible = True
+
+    def atualiza_dados_display(self):
+        self.dados_display.value = f"{self.titulo} -> {self.tipo} R$ {self.valor:.2f}"
+
+    def atualiza_valores_despeza(self):
+        self.titulo = self.edicao_titulo.value
+        self.valor = float(self.edicao_valor.value)
+        self.tipo = self.edicao_tipo.value
 
 
 class FinancasApp(ft.Column):
@@ -25,16 +98,16 @@ class FinancasApp(ft.Column):
         self.saldo = 0.00
         self.saldo_txt = ft.Text(value=f"R$ 0.00", size=60)
 
-        # Todas as movimentações.
-        self.despezas = ft.Column(spacing=10, horizontal_alignment=ft.CrossAxisAlignment.CENTER,)
+        # Exibe todas as movimentações.
+        self.despezas = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.START,)
 
-        # Carrega a planilha para guardar dados.
+        # Abre a planilha para guardar dados.
         self.planilha = Pl.Planilha()
 
-        # Atualiza dados que já estavam guardados.
+        # Carrega as movimentações antigas.
         self.carrega_mov()
 
-        # Largura das informações.
+        # Largura da tela ocupada.
         self.width = 900
 
         # Filtro de despezas.
@@ -58,9 +131,8 @@ class FinancasApp(ft.Column):
                 ft.dropdown.Option("Gasto"),
             ],
         )
-
         # Junta os elementos.
-        self.visivel_criacao = ft.Column(
+        self.criacao = ft.Column(
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=10,
             controls=[
@@ -74,8 +146,7 @@ class FinancasApp(ft.Column):
         # Adiciona na página.
         self.controls = [
             ft.Row(
-                alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                spacing=300,
+                alignment=ft.MainAxisAlignment.SPACE_EVENLY,
                 controls=[
                     ft.Column(
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -83,7 +154,7 @@ class FinancasApp(ft.Column):
                         controls=[
                             ft.Text(value=f"Saldo:", size=40),
                             self.saldo_txt,
-                            self.visivel_criacao,
+                            self.criacao,
                         ],
                     ),
                     ft.Column(
@@ -104,21 +175,18 @@ class FinancasApp(ft.Column):
         if self.valida_entrada():
             self.adiciona_mov(self.valor_despeza.value, self.nome_despeza.value, self.dd.value)
 
-            self.atualiza_planilha(f"R$ {self.valor_despeza.value}", self.nome_despeza.value, self.dd.value)
+            self.planilha.adiciona_linha(f"R$ {self.valor_despeza.value}", self.nome_despeza.value, self.dd.value)
 
             self.limpa_campos()
 
         self.update()
 
     def adiciona_mov(self, valor, titulo, tipo):
-        despeza = Despeza(titulo, valor, tipo)
+        despeza = Despeza(titulo, valor, tipo, self.caso_despeza_alterada, self.remove_despeza, self.edita_planilha)
 
-        if despeza.tipo == "Gasto":
-            self.saldo -= despeza.valor
-        else:
-            self.saldo += despeza.valor
+        self.atualiza_saldo(despeza)
 
-        self.saldo_txt.value = f"R$ {round(self.saldo, 2)}"
+        self.altera_display_saldo()
 
         self.despezas.controls.append(despeza)
 
@@ -157,23 +225,48 @@ class FinancasApp(ft.Column):
                     or (status == "Ganho" and despeza.tipo == status)
             )
 
-    def atualiza_planilha(self, valor, titulo, tipo):
-        self.planilha.add(valor, titulo, tipo)
-
     def filtro_mudou(self, e):
         self.update()
+
+    def atualiza_saldo(self, despeza):
+        if despeza.tipo == "Gasto":
+            self.saldo -= despeza.valor
+        else:
+            self.saldo += despeza.valor
+
+    def caso_despeza_alterada(self, despeza, reverte):
+        if reverte:
+            if despeza.tipo == "Gasto":
+                self.saldo += despeza.valor
+            else:
+                self.saldo -= despeza.valor
+        else:
+            if despeza.tipo == "Gasto":
+                self.saldo -= despeza.valor
+            else:
+                self.saldo += despeza.valor
+
+        self.altera_display_saldo()
+        self.update()
+
+    def remove_despeza(self, despeza):
+        self.planilha.remove(despeza)
+        self.despezas.controls.remove(despeza)
+        self.update()
+
+    def edita_planilha(self, despeza, valores_antigos):
+        self.planilha.edita(despeza, valores_antigos)
+
+    def altera_display_saldo(self):
+        self.saldo_txt.value = f"R$ {self.saldo:.2f}"
 
     def carrega_mov(self):
         for linha in self.planilha.pagina_despezas.iter_rows(min_row=2):
             if any(celulas.value is None for celulas in linha[:3]):
                 break
             try:
-                valor = linha[0].value[3:]
-                titulo = linha[1].value
-                tipo = linha[2].value
-                self.adiciona_mov(valor, titulo, tipo)
+                self.adiciona_mov(linha[0].value[3:], linha[1].value, linha[2].value)
             except Exception as e:
-                # Log the error if needed, for now, just print
                 print(f"Error processing row {linha}: {e}")
 
 
