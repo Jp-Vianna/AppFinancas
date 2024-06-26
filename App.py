@@ -64,7 +64,7 @@ class Movimentacao(ft.Column):
     # Confirma a edição da movimentação.
     def confirma_mudanca(self, e):
         valores_antigos = [self.valor, self.titulo, self.tipo]  # Salva valores antigos para procurar e subtituir na planilha.
-        self.atualiza_valores_mov()                         # Troca os valores antigos pelos novos digitados.
+        self.atualiza_valores_mov()                             # Troca os valores antigos pelos novos digitados.
         self.edita_planilha(self, valores_antigos)              # Troca os valores editados na planilha.
         self.edita_saldo(self, False)                           # Faz a mudança no saldo total com o novo valor.
         self.atualiza_dados_display()                           # Atualiza os dados da despeza que aparece na tela.
@@ -226,9 +226,17 @@ class FinancasApp(ft.Column):
 
     # Limpa a área de inputs de dados.
     def limpa_campos(self):
+        self.limpa_input()
+        self.limpa_error_text()
+
+    # Retira input anterior.
+    def limpa_input(self):
         self.nome_mov.value = ''
         self.valor_mov.value = ''
         self.dd.value = None
+
+    # Retira input error_text.
+    def limpa_error_text(self):
         self.dd.error_text = None
         self.valor_mov.error_text = None
         self.nome_mov.error_text = None
