@@ -5,9 +5,16 @@ import flet as ft
 class Despeza(ft.Column):
     def __init__(self, titulo, valor, tipo, edita_saldo, remove_despeza, edita_planilha):
         super().__init__()
+
+        # Dados da despeza.
         self.titulo = titulo
         self.valor = float(valor)
         self.tipo = tipo
+        self.edita_saldo = edita_saldo
+        self.remove_despeza = remove_despeza
+        self.edita_planilha = edita_planilha
+
+        # Métodos da classe FinancasApp.
         self.edita_saldo = edita_saldo
         self.remove_despeza = remove_despeza
         self.edita_planilha = edita_planilha
@@ -22,6 +29,7 @@ class Despeza(ft.Column):
                 ft.dropdown.Option("Gasto"),
             ],
         )
+
         # Combina os elementos de edição em um bloco.
         self.edicao = ft.Column(
             visible=False,
@@ -51,25 +59,29 @@ class Despeza(ft.Column):
 
     # Permite editar os dados de uma movimentação.
     def editar_despeza(self, e):
-        self.edita_saldo(self, True)
-        self.inverte_visibilidade()
+        self.edita_saldo(self, True)  # Reverte o valor digitado do saldo.
+        self.inverte_visibilidade()   # Mostra os controles de edição.
 
         self.update()
 
     # Confirma a edição da movimentação.
     def confirma_mudanca(self, e):
-        valores_antigos = [self.valor, self.titulo, self.tipo]
-        self.atualiza_valores_despeza()
-        self.edita_planilha(self, valores_antigos)
-        self.edita_saldo(self, False)
-        self.atualiza_dados_display()
-        self.inverte_visibilidade()
+        valores_antigos = [self.valor, self.titulo, self.tipo]  # Salva valores antigos para procurar e subtituir na planilha.
+        self.atualiza_valores_despeza()                         # Troca os valores antigos pelos novos digitados.
+        self.edita_planilha(self, valores_antigos)              # Troca os valores editados na planilha.
+        self.edita_saldo(self, False)                           # Faz a mudança no saldo total com o novo valor.
+        self.atualiza_dados_display()                           # Atualiza os dados da despeza que aparece na tela.
+        self.inverte_visibilidade()                             # Esconde os controles de edição.
+
         self.update()
 
+    # Remove uma despeza.
     def remove(self, e):
-        self.edita_saldo(self, True)
-        self.remove_despeza(self)
+        self.edita_saldo(self, True)        # Descarta a despeza do saldo.
+        self.remove_despeza(self)           # Chama o método da classe FinancasApp.
 
+    # Troca a visibilidade dos controles de edição.
+    # Se tiver visível fica invisível e vice-versa.
     def inverte_visibilidade(self):
         if self.edicao.visible:
             self.edicao.visible = False
@@ -81,9 +93,11 @@ class Despeza(ft.Column):
         else:
             self.dados.visible = True
 
+    # Apenas troca os valores mostrados na tela após uma edição.
     def atualiza_dados_display(self):
         self.dados_display.value = f"{self.titulo} -> {self.tipo} R$ {self.valor:.2f}"
 
+    # Substitui os valores antigos do objeto pelos substituidos.
     def atualiza_valores_despeza(self):
         self.titulo = self.edicao_titulo.value
         self.valor = float(self.edicao_valor.value)
@@ -96,7 +110,7 @@ class FinancasApp(ft.Column):
 
         # Exibirá o saldo.
         self.saldo = 0.00
-        self.saldo_txt = ft.Text(value=f"R$ 0.00", size=60)
+        self.saldo_txt = ft.Text(value=f"R$ 0.00", size=60)     # Será mostrado na tela do App.
 
         # Exibe todas as movimentações.
         self.despezas = ft.Column(spacing=15, horizontal_alignment=ft.CrossAxisAlignment.START,)
@@ -120,7 +134,7 @@ class FinancasApp(ft.Column):
             tabs=[ft.Tab(text="Todas"), ft.Tab(text="Gasto"), ft.Tab(text="Ganho")],
         )
 
-        # GUI para escrever dados da movimentação.
+        # Áreas para input dos dados da movimentação.
         self.nome_despeza = ft.TextField(hint_text="Título...", width=300)
         self.valor_despeza = ft.TextField(hint_text="Valor...", width=300)
         self.botao_add_movimentacao = ft.TextButton("Adicionar", on_click=self.adiciona_mov_nova, opacity=70, width=180, height=70)
@@ -172,24 +186,29 @@ class FinancasApp(ft.Column):
 
     # Adiciona novas despezas a página e na planilha.
     def adiciona_mov_nova(self, e):
-        if self.valida_entrada():
-            self.adiciona_mov(self.valor_despeza.value, self.nome_despeza.value, self.dd.value)
+        if self.valida_entrada():       # Valida se os campos estão preenchidos e corretos.
+            self.adiciona_mov(self.valor_despeza.value, self.nome_despeza.value, self.dd.value)     # Adiciona a nova movimentação.
 
-            self.planilha.adiciona_linha(f"R$ {self.valor_despeza.value}", self.nome_despeza.value, self.dd.value)
+            self.planilha.adiciona_linha(f"R$ {self.valor_despeza.value}", self.nome_despeza.value, self.dd.value)      # Adiciona a movimentação na planilha.
 
-            self.limpa_campos()
+            self.limpa_campos()     # Após a criação limpa a área do input para uma nova movimentação ser digitada.
 
         self.update()
 
+    # Consolida a criação de uma movimentação de dinheiro.
+    # Usada tanto para criar uma nova como carregar alguma digitada anteriormente.
     def adiciona_mov(self, valor, titulo, tipo):
+        # Cria objeto despeza.
         despeza = Despeza(titulo, valor, tipo, self.caso_despeza_alterada, self.remove_despeza, self.edita_planilha)
 
-        self.atualiza_saldo(despeza)
+        self.atualiza_saldo(despeza)        # Atualiza o saldo total.
 
-        self.altera_display_saldo()
+        self.altera_display_saldo()         # Atualiza o valor mostrado na tela.
 
-        self.despezas.controls.append(despeza)
+        self.despezas.controls.append(despeza)      # Mostra a despeza adicionada na tela.
 
+    # Verifica se os campos de input estão vazios.
+    # Caso exista algum campo vazio a movimentação não é criada.
     def valida_entrada(self):
         flag = True
 
@@ -207,6 +226,7 @@ class FinancasApp(ft.Column):
 
         return flag
 
+    # Limpa a área de inputs de dados.
     def limpa_campos(self):
         self.nome_despeza.value = ''
         self.valor_despeza.value = ''
@@ -215,6 +235,8 @@ class FinancasApp(ft.Column):
         self.valor_despeza.error_text = None
         self.nome_despeza.error_text = None
 
+    # Deve ser realizado antes de fazer o update da tela.
+    # Realiza a filtragem das movimentações pelo tipo.
     def before_update(self):
         status = self.filtro.tabs[self.filtro.selected_index].text
 
@@ -225,47 +247,56 @@ class FinancasApp(ft.Column):
                     or (status == "Ganho" and despeza.tipo == status)
             )
 
+    # Caso a filtragem tenha sido mudada pelo usuário, atualiza a tela.
     def filtro_mudou(self, e):
         self.update()
 
+    # Altera o saldo de acordo com o tipo de movimentação.
     def atualiza_saldo(self, despeza):
         if despeza.tipo == "Gasto":
             self.saldo -= despeza.valor
         else:
             self.saldo += despeza.valor
 
+    # Executado em casos em que o valor da movimentação foi alterado(Editado ou excluido).
     def caso_despeza_alterada(self, despeza, reverte):
-        if reverte:
+        if reverte:     # Se o reverte for true, o programa deve desfazer a movimentação.
             if despeza.tipo == "Gasto":
                 self.saldo += despeza.valor
             else:
                 self.saldo -= despeza.valor
-        else:
+        else:       # Senão, ele faz a movimentação normalmente.
             if despeza.tipo == "Gasto":
                 self.saldo -= despeza.valor
             else:
                 self.saldo += despeza.valor
 
         self.altera_display_saldo()
+
         self.update()
 
+    # Remove a movimentação da planilha e tela do app.
     def remove_despeza(self, despeza):
         self.planilha.remove(despeza)
         self.despezas.controls.remove(despeza)
+
         self.update()
 
+    # Faz a edição dos dados digitados na planilha.
     def edita_planilha(self, despeza, valores_antigos):
-        self.planilha.edita(despeza, valores_antigos)
+        self.planilha.edita(despeza, valores_antigos)       # Chama o método da planilha.
 
+    # Atualiza o saldo mostrado na tela.
     def altera_display_saldo(self):
         self.saldo_txt.value = f"R$ {self.saldo:.2f}"
 
+    # Faz a reintrodução dos dados que já foram digitados, salvos na planilha.
     def carrega_mov(self):
-        for linha in self.planilha.pagina_despezas.iter_rows(min_row=2):
-            if any(celulas.value is None for celulas in linha[:3]):
+        for linha in self.planilha.pagina_despezas.iter_rows(min_row=2):        # Percorre todas as linhas da planilha.
+            if any(celulas.value is None for celulas in linha[:3]):             # Caso encontre uma linha vazia, para.
                 break
             try:
-                self.adiciona_mov(linha[0].value[3:], linha[1].value, linha[2].value)
+                self.adiciona_mov(linha[0].value[3:], linha[1].value, linha[2].value)   # Caso contrário recria a movimentação.
             except Exception as e:
                 print(f"Error processing row {linha}: {e}")
 
@@ -282,6 +313,7 @@ if __name__ == '__main__':
         pagina.window_height = 700
         pagina.window_width = 900
 
+        # Cor do app.
         pagina.theme = ft.Theme(color_scheme_seed="green")
 
         # Inicia o app.
@@ -292,6 +324,7 @@ if __name__ == '__main__':
 
         # Adiciona scroll na página.
         pagina.scroll = "ALWAYS"
+
         # Atualiza a página.
         pagina.update()
 
