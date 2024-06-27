@@ -316,8 +316,8 @@ if __name__ == '__main__':
         pagina.padding = 0
 
         # Tamanho da janela.
-        pagina.window_height = 700
-        pagina.window_width = 900
+        pagina.window_height = 900
+        pagina.window_width = 1200
 
         # Cor do app.
         pagina.theme = ft.Theme(color_scheme_seed="green")
