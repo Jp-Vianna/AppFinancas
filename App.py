@@ -1,6 +1,7 @@
 import Planilha as Pl
 import flet as ft
 
+
 class Movimentacao(ft.Column):
     def __init__(self, titulo, valor, tipo, edita_saldo, remove_mov, edita_planilha):
         super().__init__()
