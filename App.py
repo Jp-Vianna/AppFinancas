@@ -1,6 +1,6 @@
 import Planilha as Pl
 import flet as ft
-import pandas as pd
+# import pandas as pd
 
 
 class Movimentacao(ft.Column):
@@ -131,6 +131,19 @@ class FinancasApp(ft.Column):
             tabs=[ft.Tab(text="Todas"), ft.Tab(text="Gasto"), ft.Tab(text="Ganho")],
         )
 
+        # Cria caixas de texto para exibir o valorr filtrado.
+        self.texto_filtrado = ft.Text(value="Saldo final:", size=20)
+        self.valor_filtrado = ft.Text(value=f"{self.saldo_txt.value}", size=20)
+
+        # Área para exibir o total em baixo das movimentações.
+        self.exibe_total = ft.Row(
+            alignment=ft.MainAxisAlignment.END,
+            controls=[
+                self.texto_filtrado,
+                self.valor_filtrado,
+            ],
+        )
+
         # Áreas para input dos dados da movimentação.
         self.nome_mov = ft.TextField(hint_text="Título...", width=300)
         self.valor_mov = ft.TextField(hint_text="Valor...", width=300)
@@ -173,9 +186,10 @@ class FinancasApp(ft.Column):
                         alignment=ft.MainAxisAlignment.START,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                         scroll="ALWAYS",
-                        height=600,
+                        height=650,
                         controls=[
                             self.filtro,
+                            self.exibe_total,
                             self.movs,
                         ],
                     ),
@@ -246,6 +260,7 @@ class FinancasApp(ft.Column):
     # Realiza a filtragem das movimentações pelo tipo.
     def before_update(self):
         status = self.filtro.tabs[self.filtro.selected_index].text
+        valor_filtrado = 0
 
         for mov in self.movs.controls:
             mov.visible = (
@@ -253,6 +268,15 @@ class FinancasApp(ft.Column):
                     or (status == "Gasto" and mov.tipo == status)
                     or (status == "Ganho" and mov.tipo == status)
             )
+
+            if status == "Todas":
+                valor_filtrado += mov.valor
+            elif status == mov.tipo:
+                valor_filtrado += mov.valor
+
+            self.texto_filtrado.value = f"Valor {status}:"
+            self.valor_filtrado.value = f"R$ {valor_filtrado:.2f}"
+
 
     # Caso a filtragem tenha sido mudada pelo usuário, atualiza a tela.
     def filtro_mudou(self, e):
