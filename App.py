@@ -1,5 +1,6 @@
 import Planilha as Pl
 import flet as ft
+import pandas as pd
 
 
 class Movimentacao(ft.Column):
@@ -119,11 +120,10 @@ class FinancasApp(ft.Column):
         self.carrega_mov()
 
         # Largura da tela ocupada.
-        self.width = 900
+        self.width = 1100
 
         # Filtro de movimentações.
         self.filtro = ft.Tabs(
-            scrollable=True,
             animation_duration=300,
             selected_index=0,
             tab_alignment=ft.TabAlignment.CENTER,
@@ -172,6 +172,7 @@ class FinancasApp(ft.Column):
                     ft.Column(
                         alignment=ft.MainAxisAlignment.START,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        scroll="ALWAYS",
                         height=600,
                         controls=[
                             self.filtro,
@@ -316,7 +317,7 @@ if __name__ == '__main__':
         pagina.padding = 0
 
         # Tamanho da janela.
-        pagina.window_height = 900
+        pagina.window_height = 750
         pagina.window_width = 1200
 
         # Cor do app.
@@ -327,9 +328,6 @@ if __name__ == '__main__':
 
         # Mostra a GUI.
         pagina.add(financas_app)
-
-        # Adiciona scroll na página.
-        pagina.scroll = "ALWAYS"
 
         # Atualiza a página.
         pagina.update()
