@@ -1,7 +1,5 @@
 import Planilha as Pl
 import flet as ft
-# import pandas as pd
-
 
 class Movimentacao(ft.Column):
     def __init__(self, titulo, valor, tipo, edita_saldo, remove_mov, edita_planilha):
@@ -276,7 +274,6 @@ class FinancasApp(ft.Column):
 
             self.texto_filtrado.value = f"Valor {status}:"
             self.valor_filtrado.value = f"R$ {valor_filtrado:.2f}"
-
 
     # Caso a filtragem tenha sido mudada pelo usuário, atualiza a tela.
     def filtro_mudou(self, e):
